@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Estudos - Concurso CPRM</title>
+    <link rel="stylesheet" href="./src/style/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="countdown">
+                <h1>🎯 Concurso CPRM - Designer Gráfico</h1>
+                <div class="countdown-timer" id="countdown">
+                    <!-- Countdown será inserido aqui -->
+                </div>
+            </div>
+            
+            <div class="timer-section">
+                <h3>⏱️ Cronômetro de Estudos</h3>
+                <div class="timer-display" id="timerDisplay">00:00:00</div>
+                <div class="timer-controls">
+                    <button class="btn btn-success" onclick="startTimer()">▶️ Iniciar</button>
+                    <button class="btn btn-danger" onclick="pauseTimer()">⏸️ Pausar</button>
+                    <button class="btn" onclick="resetTimer()">🔄 Reset</button>
+                    <button class="btn" onclick="saveStudySession()">💾 Salvar Sessão</button>
+                </div>
+                <div id="currentTopic" style="margin-top: 10px; font-weight: bold;"></div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+            <button class="tab" onclick="showTab('estudos')">📚 Estudos</button>
+            <button class="tab" onclick="showTab('adicionar')">➕ Adicionar Conteúdo</button>
+            <button class="tab" onclick="showTab('relatorios')">�� Relatórios</button>
+        </div>
+
+        <div class="content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Progresso Geral</h3>
+                        <div class="number" id="progressoGeral">0%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Tópicos Concluídos</h3>
+                        <div class="number" id="topicosConcluidos">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total de Tópicos</h3>
+                        <div class="number" id="totalTopicos">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Horas Estudadas</h3>
+                        <div class="number" id="horasEstudadas">0h</div>
+                    </div>
+                </div>
+                
+                <h3>📋 Próximas Revisões</h3>
+                <div id="proximasRevisoes"></div>
+            </div>
+
+            <!-- Estudos Tab -->
+            <div id="estudos" class="tab-content">
+                <div style="margin-bottom: 20px;">
+                    <input type="text" id="searchInput" placeholder="🔍 Buscar tópico..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="study-table" id="studyTable">
+                        <thead>
+                            <tr>
+                                <th>Matéria</th>
+                                <th>Tópico</th>
+                                <th>📖 Teoria</th>
+                                <th>🔄 Rev. 24h</th>
+                                <th>🔄 Rev. 7d</th>
+                                <th>🔄 Rev. 30d</th>
+                                <th>❓ Questões</th>
+                                <th>📝 Observações</th>
+                                <th>⏱️ Tempo</th>
+                                <th>🗑️</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studyTableBody">
+                            <!-- Conteúdo será inserido aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Adicionar Conteúdo Tab -->
+            <div id="adicionar" class="tab-content hidden">
+                <div class="add-content-form">
+                    <h3>➕ Adicionar Novo Conteúdo</h3>
+                    <form id="addContentForm">
+                        <div class="form-group">
+                            <label for="novaMateria">Matéria:</label>
+                            <input type="text" id="novaMateria" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="novoTopico">Tópico:</label>
+                            <input type="text" id="novoTopico" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="novasObservacoes">Observações:</label>
+                            <textarea id="novasObservacoes" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">✅ Adicionar</button>
+                    </form>
+                </div>
+                
+                <div class="export-section">
+                    <h3>💾 Backup e Restauração</h3>
+                    <button class="btn" onclick="exportData()">📤 Exportar Dados</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+                    <button class="btn" onclick="document.getElementById('importFile').click()">📥 Importar Dados</button>
+                    <button class="btn btn-danger" onclick="clearAllData()">🗑️ Limpar Todos os Dados</button>
+                </div>
+            </div>
+
+            <!-- Relatórios Tab -->
+            <div id="relatorios" class="tab-content hidden">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Matérias com Maior Progresso</h3>
+                        <div id="materiasMaiorProgresso"></div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Matérias que Precisam de Atenção</h3>
+                        <div id="materiasAtencao"></div>
+                    </div>
+                </div>
+                
+                <h3>📊 Progresso por Matéria</h3>
+                <div id="progressoPorMateria"></div>
+                
+                <h3>📅 Histórico de Estudos</h3>
+                <div id="historicoEstudos"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./src/script/data.js"></script>
+    <script src="./src/script/script.js"></script>
+</body>
+</html>
