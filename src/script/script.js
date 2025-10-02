@@ -8,8 +8,8 @@ let timer = {
     currentTopic: null
 };
 
-// Data da prova
-const examDate = new Date('2024-11-30T08:00:00');
+// CORREÇÃO: Data da prova corrigida para 2024
+const examDate = new Date('2025-11-30T08:00:00');
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
@@ -62,7 +62,7 @@ function saveData() {
     updateDashboard();
 }
 
-// Countdown para a prova
+// CORREÇÃO: Countdown para a prova com melhor formatação
 function updateCountdown() {
     const now = new Date();
     const timeLeft = examDate - now;
@@ -92,7 +92,7 @@ function updateCountdown() {
             </div>
         `;
     } else {
-        document.getElementById('countdown').innerHTML = '<h2>🎉 Dia da Prova!</h2>';
+        document.getElementById('countdown').innerHTML = '<h2 style="color: #e74c3c;">🎉 Dia da Prova Chegou!</h2>';
     }
 }
 
@@ -179,12 +179,16 @@ function updateQuestions(index, field, value) {
     saveData();
 }
 
-// Cronômetro
+// CORREÇÃO: Cronômetro com lógica corrigida
 function startTimer() {
     if (!timer.isRunning) {
         timer.startTime = Date.now() - timer.elapsedTime;
         timer.isRunning = true;
         timer.interval = setInterval(updateTimerDisplay, 1000);
+        
+        // Atualizar visual dos botões
+        updateTimerButtons();
+        console.log('Timer iniciado:', timer); // Debug
     }
 }
 
@@ -192,6 +196,8 @@ function pauseTimer() {
     if (timer.isRunning) {
         timer.isRunning = false;
         clearInterval(timer.interval);
+        updateTimerButtons();
+        console.log('Timer pausado:', timer); // Debug
     }
 }
 
@@ -201,7 +207,9 @@ function resetTimer() {
     timer.currentTopic = null;
     clearInterval(timer.interval);
     updateTimerDisplay();
+    updateTimerButtons();
     document.getElementById('currentTopic').textContent = '';
+    console.log('Timer resetado:', timer); // Debug
 }
 
 function updateTimerDisplay() {
@@ -218,24 +226,74 @@ function updateTimerDisplay() {
         `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
-function startStudySession(index) {
-    timer.currentTopic = index;
-    document.getElementById('currentTopic').textContent = `Estudando: ${studyData[index].topico}`;
-    resetTimer();
-    startTimer();
+// NOVA FUNÇÃO: Atualizar visual dos botões do timer
+function updateTimerButtons() {
+    const startBtn = document.querySelector('button[onclick="startTimer()"]');
+    const pauseBtn = document.querySelector('button[onclick="pauseTimer()"]');
+    const saveBtn = document.querySelector('button[onclick="saveStudySession()"]');
+    
+    if (timer.isRunning) {
+        startBtn.style.opacity = '0.5';
+        pauseBtn.style.opacity = '1';
+        saveBtn.style.opacity = '1';
+    } else {
+        startBtn.style.opacity = '1';
+        pauseBtn.style.opacity = '0.5';
+        saveBtn.style.opacity = timer.elapsedTime > 0 ? '1' : '0.5';
+    }
 }
 
+function startStudySession(index) {
+    // CORREÇÃO: Melhor controle da sessão de estudo
+    timer.currentTopic = index;
+    const topico = studyData[index].topico;
+    document.getElementById('currentTopic').innerHTML = `
+        <strong>📚 Estudando:</strong> ${topico}<br>
+        <small>Matéria: ${studyData[index].materia}</small>
+    `;
+    
+    // Reset e start do timer
+    resetTimer();
+    timer.currentTopic = index; // Reassegurar após reset
+    startTimer();
+    
+    console.log('Sessão iniciada para:', topico, 'Index:', index); // Debug
+    showAlert(`Sessão de estudo iniciada: ${topico}`, 'success');
+}
+
+// CORREÇÃO: Função de salvar sessão corrigida
 function saveStudySession() {
-    if (timer.currentTopic !== null && timer.elapsedTime > 0) {
-        studyData[timer.currentTopic].tempoEstudo += timer.elapsedTime;
-        studyData[timer.currentTopic].dataUltimoEstudo = new Date().toISOString();
-        saveData();
-        renderStudyTable();
-        showAlert('Sessão de estudo salva com sucesso!', 'success');
-        resetTimer();
-    } else {
-        showAlert('Nenhuma sessão de estudo ativa para salvar.', 'warning');
+    console.log('Tentando salvar sessão:', timer); // Debug
+    
+    // Verificar se há uma sessão ativa
+    if (timer.currentTopic === null) {
+        showAlert('Nenhum tópico selecionado. Clique no botão ⏱️ de um tópico para iniciar uma sessão.', 'warning');
+        return;
     }
+    
+    if (timer.elapsedTime <= 0) {
+        showAlert('Nenhum tempo registrado. Inicie o cronômetro primeiro.', 'warning');
+        return;
+    }
+    
+    // Salvar o tempo estudado
+    const tempoAnterior = studyData[timer.currentTopic].tempoEstudo || 0;
+    studyData[timer.currentTopic].tempoEstudo = tempoAnterior + timer.elapsedTime;
+    studyData[timer.currentTopic].dataUltimoEstudo = new Date().toISOString();
+    
+    // Salvar dados
+    saveData();
+    renderStudyTable();
+    
+    // Feedback para o usuário
+    const tempoSessao = formatTime(timer.elapsedTime);
+    const tempoTotal = formatTime(studyData[timer.currentTopic].tempoEstudo);
+    const topico = studyData[timer.currentTopic].topico;
+    
+    showAlert(`✅ Sessão salva! ${tempoSessao} adicionados ao tópico "${topico}". Total: ${tempoTotal}`, 'success');
+    
+    // Reset do timer
+    resetTimer();
 }
 
 // Filtrar tabela
@@ -503,8 +561,10 @@ function formatTime(milliseconds) {
     
     if (hours > 0) {
         return `${hours}h ${minutes}m`;
-    } else {
+    } else if (minutes > 0) {
         return `${minutes}m`;
+    } else {
+        return `${totalSeconds}s`;
     }
 }
 
@@ -517,17 +577,20 @@ function showAlert(message, type = 'info') {
     alert.style.top = '20px';
     alert.style.right = '20px';
     alert.style.zIndex = '9999';
-    alert.style.maxWidth = '300px';
+    alert.style.maxWidth = '400px';
+    alert.style.padding = '15px';
+    alert.style.borderRadius = '5px';
+    alert.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
     
     // Adicionar ao body
     document.body.appendChild(alert);
     
-    // Remover após 3 segundos
+    // Remover após 4 segundos
     setTimeout(() => {
         if (alert.parentNode) {
             alert.parentNode.removeChild(alert);
         }
-    }, 3000);
+    }, 4000);
 }
 
 // Funções de backup e restauração
